@@ -1,0 +1,29 @@
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
+<VBox fx:controller="com.alexcloud.cloud.client.Controller"
+      xmlns:fx="http://javafx.com/fxml" alignment="center">
+    <MenuBar>
+        <Menu text="Меню">
+            <MenuItem text="Выйти из программы"/>
+        </Menu>
+    </MenuBar>
+    <HBox>
+        <ComboBox/>
+        <TextField HBox.hgrow="ALWAYS" editable="false"/>
+        <Button text="Вверх"/>
+    </HBox>
+    <TableView VBox.vgrow="ALWAYS"/>
+    <HBox spacing="5">
+        <Button text="Отправить на сервер" />
+        <Button text="Скачать" />
+        <Button text="Удалить с сервера" />
+    </HBox>
+
+</VBox>
