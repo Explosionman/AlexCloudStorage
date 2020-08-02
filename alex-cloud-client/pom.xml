@@ -11,6 +11,14 @@
 
     <artifactId>alex-cloud-client</artifactId>
     <version>1</version>
+    <dependencies>
+        <dependency>
+            <groupId>com.alexprojects</groupId>
+            <artifactId>alex-cloud-common</artifactId>
+            <version>1</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 
 </project>
