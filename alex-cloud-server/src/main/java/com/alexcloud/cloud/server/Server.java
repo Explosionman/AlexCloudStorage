@@ -17,15 +17,16 @@ public class Server {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new ServerHandler());
+                            ch.pipeline().addLast(new ServerHandlerIn());
                         }
                     });
-                   // .childOption(ChannelOption.SO_KEEPALIVE, true);
-
+            // .childOption(ChannelOption.SO_KEEPALIVE, true);
             ChannelFuture f = sb.bind(8189).sync();
+            SqlClient.connect();
             System.out.println("Сервер запущен");
             f.channel().closeFuture().sync();
         } finally {
+            SqlClient.disconnect();
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }

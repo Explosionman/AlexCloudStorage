@@ -19,6 +19,12 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.51.Final</version>
         </dependency>
+        <dependency>
+            <groupId>com.alexprojects</groupId>
+            <artifactId>alex-cloud-common</artifactId>
+            <version>1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 

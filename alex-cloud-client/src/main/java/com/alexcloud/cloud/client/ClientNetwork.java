@@ -1,12 +1,12 @@
 package com.alexcloud.cloud.client;
 
+import com.alexcloud.cloud.client.callbacks.FileReceivedCallback;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 
 public class ClientNetwork {
@@ -29,6 +29,10 @@ public class ClientNetwork {
         return currentChannel;
     }
 
+    public void setOnReceivedCallback(FileReceivedCallback onReceivedFileReceivedCallback) {
+        currentChannel.pipeline().get(ClientHandler.class).setReceivedCallback(onReceivedFileReceivedCallback);
+    }
+
     public void start(CountDownLatch countDownLatch) {
         System.out.println("Начало работы метода start в ClientNetwork");
         EventLoopGroup group = new NioEventLoopGroup();
@@ -40,8 +44,8 @@ public class ClientNetwork {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel channel) {
-                            // channel.pipeline().addLast();
                             currentChannel = channel;
+                            currentChannel.pipeline().addLast(new ClientHandler());
                         }
                     });
             ChannelFuture channelFuture = clientBootstrap.connect(HOST, PORT).sync();

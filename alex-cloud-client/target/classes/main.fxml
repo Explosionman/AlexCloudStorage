@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 
 <VBox fx:id="mp" alignment="center" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/10.0.2-internal"
-      fx:controller="com.alexcloud.cloud.client.Controller">
+      fx:controller="com.alexcloud.cloud.client.controllers.Controller">
 
     <MenuBar>
         <Menu text="Меню">
@@ -27,7 +27,7 @@
         <VBox HBox.hgrow="ALWAYS">
             <fx:include fx:id="serverPanel" source="serverPanel.fxml" VBox.vgrow="ALWAYS"/>
             <HBox HBox.hgrow="ALWAYS">
-            <Button fx:id="download" maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="download" maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS" onAction="#btnDownloadAction"/>
             <Button fx:id="delete" maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>
 
              <padding>
