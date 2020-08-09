@@ -17,7 +17,7 @@ public class Server {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new ServerHandlerIn());
+                            ch.pipeline().addLast(new ServerHandler());
                         }
                     });
             // .childOption(ChannelOption.SO_KEEPALIVE, true);

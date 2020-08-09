@@ -1,7 +1,5 @@
 package com.alexcloud.cloud.client;
 
-import com.alexcloud.cloud.client.callbacks.AuthCallback;
-import com.alexcloud.cloud.client.callbacks.AuthFailedCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import javafx.application.Application;
@@ -29,19 +27,23 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
 
 public class Main extends Application {
 
     private static Stage stage;
+    public static String clientName;
+    public static boolean authOK = false;
+    public static boolean authFailed = false;
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) throws InterruptedException {
         stage = primaryStage;
         stage.setTitle("Alex`s Cloud Storage");
 
-        //Ниже идёт четсно скопированный из интернета код меню с css (подредактировал под себя)
+        //Честно скопировал расстановку кнопок и полей из интернета для входного меню вместе с css (подредактировал под себя)
         //не хотел тратить время на зарисовку, планирую перенести в FXML
-        //btnAction и смена сцен написана самостоятельно
+        //остальное всё своё родное
         BorderPane bp = new BorderPane();
         bp.setPadding(new Insets(10, 50, 50, 50));
 
@@ -59,7 +61,7 @@ public class Main extends Application {
         Label lblUserName = new Label("Username");
         final TextField txtUserName = new TextField();
         Label lblPassword = new Label("Password");
-        final PasswordField pf = new PasswordField();
+        final PasswordField passwordField = new PasswordField();
         Button btnLogin = new Button("Login");
         final Label lblMessage = new Label();
 
@@ -67,10 +69,9 @@ public class Main extends Application {
         gridPane.add(lblUserName, 0, 0);
         gridPane.add(txtUserName, 1, 0);
         gridPane.add(lblPassword, 0, 1);
-        gridPane.add(pf, 1, 1);
+        gridPane.add(passwordField, 1, 1);
         gridPane.add(btnLogin, 2, 1);
         gridPane.add(lblMessage, 1, 2);
-
 
         //Отражение
         Reflection r = new Reflection();
@@ -96,18 +97,31 @@ public class Main extends Application {
         btnLogin.setId("btnLogin");
         text.setId("text");
 
+        //Расставляем HBox и GridPane по BorderPane
+        bp.setTop(hb);
+        bp.setCenter(gridPane);
+
+        lblMessage.setTextFill(Color.GREEN);
+        lblMessage.setText("Введите логин и пароль для входа");
+
+        //Добавляем BorderPane на сцену с подгрузкой css
+        Scene scene = new Scene(bp);
+        scene.getStylesheets().add(getClass().getClassLoader().getResource("login.css").toExternalForm());
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.show();
+
         //Действие при нажатии btnLogin
         btnLogin.setOnAction(new EventHandler() {
             public void handle(Event event) {
-//                checkUser = txtUserName.getText();
-//                checkPw = pf.getText();
-//                if (checkUser.equals(user) && checkPw.equals(pw)) {
-                lblMessage.setTextFill(Color.GREEN);
                 try {
-                    lblMessage.setText("Подключение к серверу");
                     ClientWithoutFX.start();
-                    lblMessage.setText("Соединение установлено");
-                    String lp = txtUserName.getText() + "Auth" + pf.getText();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    String lp = txtUserName.getText() + "Auth" + passwordField.getText();
+
                     byte[] loginAndPassword = lp.getBytes(StandardCharsets.UTF_8);
 
                     ByteBuf buf = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + loginAndPassword.length);
@@ -121,45 +135,41 @@ public class Main extends Application {
                     System.out.println("Записали данные для входа");
 
                     ClientNetwork.getInstance().getCurrentChannel().writeAndFlush(buf);
-                    lblMessage.setText("Аутентификация...");
-                    System.out.println("Оправили данные для аутентификации");
+                    System.out.println("Отправили данные для входа");
+                    passwordField.setText("Аутентификация...");
 
-                    ClientNetwork.getInstance().
+                    while (authOK != true || authFailed != true) {
+                        Thread.sleep(200);
 
+                        if (authFailed == true) {
+                            passwordField.setText("");
+                            System.out.println("НЕВЕРНО УКАЗАН ПАРОЛЬ");
+                            lblMessage.setText("Неверно указан логин или пароль.");
+                            lblMessage.setTextFill(Color.RED);
+                            authFailed = false;
+                            break;
+                        }
+                        if (authOK == true) {
+                            lblMessage.setText("Добро пожаловать, " + clientName);
+                            lblMessage.setTextFill(Color.GREEN);
+                            clientName = txtUserName.getText();
 
-                    //После авторизации меняем сцену
-                    setMainScene();
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
+                            //После авторизации меняем сцену
+                            setMainScene();
+                            break;
+                        }
+                    }
+                } catch (InterruptedException | IOException e) {
                     e.printStackTrace();
                 }
-//                } else {
-//                    lblMessage.setText("Неверно указан логин или пароль.");
-//                    lblMessage.setTextFill(Color.RED);
-//                }
-//                txtUserName.setText("");
-//                pf.setText("");
             }
         });
-
-        //Расставляем HBox и GridPane по BorderPane
-        bp.setTop(hb);
-        bp.setCenter(gridPane);
-
-        //Добавляем BorderPane на сцену с подгрузкой css
-        Scene scene = new Scene(bp);
-        scene.getStylesheets().add(getClass().getClassLoader().getResource("login.css").toExternalForm());
-        stage.setScene(scene);
-        stage.setResizable(false);
-        stage.show();
     }
 
 
     @FXML
     public static void setMainScene() throws IOException {
+        System.out.println("Меняем сцену на главную");
         stage.hide();
         Parent root = FXMLLoader.load(Main.class.getResource("/main.fxml"));
         Scene scene = new Scene(root, 1200, 600);

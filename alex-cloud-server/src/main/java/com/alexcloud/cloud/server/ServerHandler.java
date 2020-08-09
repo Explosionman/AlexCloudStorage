@@ -12,7 +12,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 
-public class ServerHandlerIn extends ChannelInboundHandlerAdapter {
+public class ServerHandler extends ChannelInboundHandlerAdapter {
 
     public enum State {
         IDLE, NAME_LENGTH, NAME, FILE_LENGTH, FILE
@@ -65,9 +65,9 @@ public class ServerHandlerIn extends ChannelInboundHandlerAdapter {
                     String[] checkBeforeEnter = new String(accPass, StandardCharsets.UTF_8).split("Auth");
                     String accName = checkBeforeEnter[0];
                     String pwd = checkBeforeEnter[1];
+                    System.out.println("Проверка данных введенных пользователем");
                     String confirmedName = SqlClient.getNickname(accName, pwd);
-
-
+                    authAnswer(confirmedName, ctx.channel());
                 } else {
                     System.out.println("Произошла неведомая хрень в IDLE -> NAME_LENGTH");
                 }

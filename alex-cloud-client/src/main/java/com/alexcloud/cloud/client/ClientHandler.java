@@ -1,7 +1,5 @@
 package com.alexcloud.cloud.client;
 
-import com.alexcloud.cloud.client.callbacks.AuthCallback;
-import com.alexcloud.cloud.client.callbacks.AuthFailedCallback;
 import com.alexcloud.cloud.client.callbacks.FileReceivedCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,16 +13,6 @@ import java.nio.charset.StandardCharsets;
 public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     private FileReceivedCallback receivedCallback;
-    private AuthCallback authCallback;
-    private AuthFailedCallback authFailedCallback;
-
-    public void setAuthCallback(AuthCallback authCallback) {
-        this.authCallback = authCallback;
-    }
-
-    public void setAuthFailedCallback(AuthFailedCallback authFailedCallback) {
-        this.authFailedCallback = authFailedCallback;
-    }
 
     public void setReceivedCallback(FileReceivedCallback receivedCallback) {
         this.receivedCallback = receivedCallback;
@@ -46,7 +34,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("работает channelRead");
+        System.out.println("работает channelRead  (Хэндлер)");
         ByteBuf buf = ((ByteBuf) msg);
         while (buf.readableBytes() > 0) {
             if (currentState == State.IDLE) {
@@ -56,20 +44,23 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                     receivedFileLength = 0L;
                     //Ответ от сервера, что пароль/логин не прошли проверку
                 } else if (readAtTheMoment == SIGNAL_BYTE_AUTH_FAILED) {
-                    setAuthFailedCallback(authFailedCallback);
+                    System.out.println("Аутентификация провалена!!! (Хэндлер)");
+                    Main.authFailed = true;
+                    currentState = State.IDLE;
                 } else if (readAtTheMoment == SIGNAL_BYTE_AUTH_OK) {
-                    setAuthCallback(authCallback);
+                    System.out.println("Аутентификация успешно пойдена (Хэндлер)");
+                    Main.authOK = true;
+                    currentState = State.IDLE;
                 } else {
-                    System.out.println("Произошла хрень в IDLE -> NAME_LENGTH");
+                    System.out.println("Произошла хрень в IDLE -> NAME_LENGTH (Хэндлер)");
                 }
             }
             if (currentState == State.NAME_LENGTH) {
                 //Длина имени файла будет в интовой (что будет больше 4 байт)
                 if (buf.readableBytes() >= 4) {
-                    System.out.println("Получаем длину названия файла");
+                    System.out.println("Получаем длину названия файла (Хэндлер)");
                     nextLength = buf.readInt();
                     currentState = State.NAME;
-
                 }
             }
             if (currentState == State.NAME) {

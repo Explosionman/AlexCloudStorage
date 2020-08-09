@@ -1,6 +1,7 @@
 package com.alexcloud.cloud.client.controllers;
 
 import com.alexcloud.cloud.client.FileInfo;
+import com.alexcloud.cloud.client.Main;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -89,14 +90,14 @@ public class ServerPanelController implements Initializable {
 //        });
 
 
-        updateFileList(Paths.get("./server-storage/client1/"));
+        updateFileList(Paths.get(Controller.ROOT_PATH, Main.clientName));
     }
 
     public void updateFileList(Path path) {
         try {
-            pathFiled.setText("Client1" + " storage");
+            pathFiled.setText(Main.clientName + " storage");
             serverFilesTable.getItems().clear();
-            serverFilesTable.getItems().addAll(Files.list(Paths.get("./server-storage/Client1/")).map(FileInfo::new).collect(Collectors.toList()));
+            serverFilesTable.getItems().addAll(Files.list(Paths.get(Controller.ROOT_PATH, Main.clientName)).map(FileInfo::new).collect(Collectors.toList()));
             serverFilesTable.sort();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "Не удалось обновить список файлов", ButtonType.OK);
@@ -104,12 +105,6 @@ public class ServerPanelController implements Initializable {
         }
     }
 
-//    public void btnUpPathAction(ActionEvent actionEvent) {
-//        Path upperPath = Paths.get(pathFiled.getText()).getParent();
-//        if (upperPath != null) {
-//            updateFileList(upperPath);
-//        }
-//    }
 
     public String getSelectedFilename() {
         if (!serverFilesTable.isFocused()) {
@@ -119,7 +114,7 @@ public class ServerPanelController implements Initializable {
     }
 
     public String getCurrentPath() {
-        return "./server-storage/Client1/";
+        return Controller.ROOT_PATH + Main.clientName;
     }
 
     public void btnDownloadAction(ActionEvent actionEvent) {

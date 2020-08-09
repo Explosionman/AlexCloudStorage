@@ -1,6 +1,7 @@
 package com.alexcloud.cloud.client.controllers;
 
 import com.alexcloud.cloud.client.ClientNetwork;
+import com.alexcloud.cloud.client.Main;
 import com.alexcloud.cloud.common.FileSender;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -15,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Controller {
+
+    public static final String ROOT_PATH = "./server-storage/";
 
     @FXML
     VBox clientPanel, serverPanel;
@@ -34,6 +37,7 @@ public class Controller {
     }
 
     public void menuItemExitAction(ActionEvent actionEvent) {
+        ClientNetwork.getInstance().stop();
         Platform.exit();
     }
 
@@ -51,14 +55,13 @@ public class Controller {
         FileSender.sendFile(srsPath, ClientNetwork.getInstance().getCurrentChannel(), channelFuture -> {
             if (!channelFuture.isSuccess()) {
                 channelFuture.cause().printStackTrace();
-                ClientNetwork.getInstance().stop();
             }
             if (channelFuture.isSuccess()) {
                 System.out.println("Файл успешно передан!");
                 System.out.println("Спим");
                 Thread.sleep(2000);
                 System.out.println("Проснулись");
-                serverPC.updateFileList(Paths.get("./server-storage/Client1"));
+                serverPC.updateFileList(Paths.get(ROOT_PATH, Main.clientName));
                 System.out.println("Обновились");
             }
         });
