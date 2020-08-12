@@ -1,6 +1,6 @@
 package com.alexcloud.cloud.client.controllers;
 
-import com.alexcloud.cloud.client.FileInfo;
+import com.alexcloud.cloud.client.filesInfo.FileInfo;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -21,6 +21,8 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class ClientPanelController implements Initializable {
+
+    public static String actualClientPath;
 
     @FXML
     TableView<FileInfo> clientFilesTable;
@@ -85,7 +87,6 @@ public class ClientPanelController implements Initializable {
             disksBox.getItems().add(p.toString());
         }
 
-
         disksBox.getSelectionModel().select(0);
 
         clientFilesTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -94,13 +95,13 @@ public class ClientPanelController implements Initializable {
                 if (event.getClickCount() == 2) {
                     Path path = Paths.get(pathFiled.getText()).resolve(clientFilesTable.getSelectionModel().getSelectedItem().getFileName());
                     if (Files.isDirectory(path)) {
+                        actualClientPath = path.toString();
                         updateFileList(path);
                     }
                 }
             }
         });
-
-        System.out.println("Первые найденный диск из списка: " + rootPath.toString());
+        System.out.println("Первый найденный диск из списка: " + rootPath.toString());
         updateFileList(Paths.get(rootPath.toString()));
     }
 
@@ -136,11 +137,7 @@ public class ClientPanelController implements Initializable {
     }
 
     public String getCurrentPath() {
+        System.out.println("Это путь, который пока не работает корректно: " + pathFiled.getText());
         return pathFiled.getText();
-    }
-
-
-    public void btnLoadAction(ActionEvent actionEvent) {
-
     }
 }

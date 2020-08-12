@@ -1,5 +1,6 @@
 package com.alexcloud.cloud.client.controllers;
 
+import com.alexcloud.cloud.client.ClientHandler;
 import com.alexcloud.cloud.client.ClientNetwork;
 import com.alexcloud.cloud.client.Main;
 import com.alexcloud.cloud.common.FileSender;
@@ -12,12 +13,15 @@ import javafx.scene.control.Alert;
 import javafx.scene.layout.VBox;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Controller {
 
-    public static final String ROOT_PATH = "./server-storage/";
+    private final byte SIGNAL_BYTE_UPDATE = 45;
+    private String selectedFile;
+    public static final String ROOT_PATH = "./client-storage/";
 
     @FXML
     VBox clientPanel, serverPanel;
@@ -27,9 +31,16 @@ public class Controller {
 
     public void btnDownloadAction(ActionEvent actionEvent) {
         clientPC = (ClientPanelController) clientPanel.getProperties().get("ctrl");
-        ByteBuf buf = ByteBufAllocator.DEFAULT.directBuffer(1);
+        serverPC = (ServerPanelController) serverPanel.getProperties().get("serverCtrl");
+        selectedFile = serverPC.getSelectedFilename();
+        byte[] filenameBytes = selectedFile.getBytes(StandardCharsets.UTF_8);
+
+        ByteBuf buf = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + filenameBytes.length);
         buf.writeByte((byte) 35);
-        System.out.println("Оправили сигнальный байт 35");
+        buf.writeInt(filenameBytes.length);
+        buf.writeBytes(filenameBytes);
+        System.out.println("Оправили сигнальный байт 35 и данные запрашиваемом файле");
+
         ClientNetwork.getInstance().getCurrentChannel().writeAndFlush(buf);
         ClientNetwork.getInstance().setOnReceivedCallback(() -> {
             clientPC.updateFileList(Paths.get(clientPC.getCurrentPath()));
@@ -59,11 +70,15 @@ public class Controller {
             if (channelFuture.isSuccess()) {
                 System.out.println("Файл успешно передан!");
                 System.out.println("Спим");
-                Thread.sleep(2000);
+                Thread.sleep(1000);
                 System.out.println("Проснулись");
-                serverPC.updateFileList(Paths.get(ROOT_PATH, Main.clientName));
-                System.out.println("Обновились");
+                ByteBuf buf = ByteBufAllocator.DEFAULT.directBuffer(1);
+                buf.writeByte(SIGNAL_BYTE_UPDATE);
+                ClientNetwork.getInstance().getCurrentChannel().writeAndFlush(buf);
             }
+            ClientNetwork.getInstance().setOnFileListReceivedCallback(() -> {
+                serverPC.updateFileList(ClientHandler.fileList);
+            });
         });
     }
 }

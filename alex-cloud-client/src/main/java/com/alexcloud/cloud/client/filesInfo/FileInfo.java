@@ -1,4 +1,4 @@
-package com.alexcloud.cloud.client;
+package com.alexcloud.cloud.client.filesInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;

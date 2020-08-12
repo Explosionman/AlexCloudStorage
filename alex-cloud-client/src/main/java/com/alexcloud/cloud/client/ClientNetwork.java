@@ -1,6 +1,9 @@
 package com.alexcloud.cloud.client;
 
+import com.alexcloud.cloud.client.callbacks.FileListReceivedCallback;
 import com.alexcloud.cloud.client.callbacks.FileReceivedCallback;
+import com.alexcloud.cloud.client.callbacks.UserAlreadyExistsCallback;
+import com.alexcloud.cloud.client.callbacks.UserSuccessfullyCreatedCallback;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -20,7 +23,6 @@ public class ClientNetwork {
     final int PORT = 8189;
 
     private ClientNetwork() {
-        System.out.println("Конструктор");
     }
 
     private Channel currentChannel;
@@ -31,6 +33,18 @@ public class ClientNetwork {
 
     public void setOnReceivedCallback(FileReceivedCallback onReceivedFileReceivedCallback) {
         currentChannel.pipeline().get(ClientHandler.class).setReceivedCallback(onReceivedFileReceivedCallback);
+    }
+
+    public void setOnFileListReceivedCallback(FileListReceivedCallback onFileListReceivedCallback) {
+        currentChannel.pipeline().get(ClientHandler.class).setFileListReceivedCallback(onFileListReceivedCallback);
+    }
+
+    public void setOnUserAlreadyExistsCallback(UserAlreadyExistsCallback onUserAlreadyExistsCallback) {
+        currentChannel.pipeline().get(ClientHandler.class).setUserAlreadyExistsCallback(onUserAlreadyExistsCallback);
+    }
+
+    public void setOnUserSuccessfullyCreatedCallback(UserSuccessfullyCreatedCallback onUserSuccessfullyCreatedCallback) {
+        currentChannel.pipeline().get(ClientHandler.class).setUserSuccessfullyCreatedCallback(onUserSuccessfullyCreatedCallback);
     }
 
     public void start(CountDownLatch countDownLatch) {

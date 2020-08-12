@@ -28,7 +28,7 @@
             <fx:include fx:id="serverPanel" source="serverPanel.fxml" VBox.vgrow="ALWAYS"/>
             <HBox HBox.hgrow="ALWAYS">
             <Button fx:id="download" maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS" onAction="#btnDownloadAction"/>
-            <Button fx:id="delete" maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>
+<!--  ДОДЕЛАТЬ ПОСЛЕ РЕВЬЮ  <Button fx:id="delete" maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>-->
 
              <padding>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>

@@ -7,10 +7,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class ServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -18,9 +19,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         IDLE, NAME_LENGTH, NAME, FILE_LENGTH, FILE
     }
 
+    private final byte SIGNAL_BYTE_CREATE_USER = 5;
+    private final byte SIGNAL_BYTE_CREATE_USER_OK = 7;
+    private final byte SIGNAL_BYTE_CREATE_USER_FAILED = 9;
+    private final byte SIGNAL_BYTE_AUTH_FAILED = 10;
     private final byte SIGNAL_BYTE_AUTH = 15;
     private final byte SIGNAL_BYTE_IN = 25;
     private final byte SIGNAL_BYTE_OUT = 35;
+    private final byte SIGNAL_BYTE_UPDATE = 45;
+    private static final String ROOT_PATH = "./server-storage/";
+    private String confirmedName;
+    private String confirmedRootName;
+    private StringBuffer sb = new StringBuffer();
 
     private State currentState = State.IDLE;
     private int nextLength;
@@ -42,16 +52,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
                     //Если получаем сигнал на отдачу файла
                 } else if (readAtTheMoment == SIGNAL_BYTE_OUT) {
-                    FileSender.sendFile(Paths.get("./server-storage/Client1/11.txt"), ctx.channel(), channelFuture -> {
+                    nextLength = buf.readInt();
+                    byte[] fileName = new byte[nextLength];
+                    buf.readBytes(fileName);
+                    String name = new String(fileName, StandardCharsets.UTF_8);
+                    System.out.println("Это имя файла, который запросил клиент" + name);
+
+                    FileSender.sendFile(Paths.get(ROOT_PATH + confirmedRootName + new String(fileName, StandardCharsets.UTF_8)), ctx.channel(), channelFuture -> {
                         if (!channelFuture.isSuccess()) {
                             channelFuture.cause().printStackTrace();
                         }
                         if (channelFuture.isSuccess()) {
                             System.out.println("Файл успешно передан!");
-                            System.out.println("Спим");
-                            Thread.sleep(2000);
-                            System.out.println("Проснулись");
-                            System.out.println("Нормально обновились");
                         }
                     });
 
@@ -66,8 +78,43 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                     String accName = checkBeforeEnter[0];
                     String pwd = checkBeforeEnter[1];
                     System.out.println("Проверка данных введенных пользователем");
-                    String confirmedName = SqlClient.getNickname(accName, pwd);
-                    authAnswer(confirmedName, ctx.channel());
+                    confirmedName = SqlClient.getNickname(accName, pwd);
+                    if (confirmedName != null) {
+                        String fileList = getFileList(ROOT_PATH + confirmedName + "//");
+                        System.out.println("Список файлов в папке " + confirmedName + ": " + fileList);
+                        authAnswer(ctx.channel(), fileList);
+                    } else {
+                        authFailedAnswer(ctx.channel());
+                    }
+                    confirmedRootName = confirmedName + "//";
+                } else if (readAtTheMoment == SIGNAL_BYTE_UPDATE) {
+                    updateFileList(ctx.channel(), getFileList(ROOT_PATH + confirmedName + "//"));
+                } else if (readAtTheMoment == SIGNAL_BYTE_CREATE_USER) {
+                    System.out.println("Получен сигнальный байт для регистрации");
+                    nextLength = buf.readInt();
+                    byte[] accPass = new byte[nextLength];
+                    buf.readBytes(accPass);
+                    String[] dataBeforeRegister = new String(accPass, StandardCharsets.UTF_8).split("SEPARATOR");
+                    System.out.println("Получена строка для регистрации: " + Arrays.toString(dataBeforeRegister));
+                    String accName = dataBeforeRegister[0];
+                    String pwd = dataBeforeRegister[1];
+                    System.out.println("Проверка данных введенных пользователем");
+                    if (SqlClient.checkUserExists(accName) == false) {
+                        SqlClient.createUser(accName, pwd);
+                        makeNewDir(accName);
+                        System.out.println("Пользователь успешно создан!");
+                        System.out.println("Отправлен соответствующий сигнал!");
+                        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1);
+                        buffer.writeByte(SIGNAL_BYTE_CREATE_USER_OK);
+                        ctx.writeAndFlush(buffer);
+                    } else {
+                        System.out.println("Такой пользователь уже существует!");
+                        System.out.println("Отправлен соответствующий сигнал!");
+                        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1);
+                        buffer.writeByte(SIGNAL_BYTE_CREATE_USER_FAILED);
+                        ctx.writeAndFlush(buffer);
+                    }
+                    currentState = State.FILE_LENGTH;
                 } else {
                     System.out.println("Произошла неведомая хрень в IDLE -> NAME_LENGTH");
                 }
@@ -85,7 +132,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                     byte[] fileName = new byte[nextLength];
                     buf.readBytes(fileName);
                     System.out.println("Получен файл: " + new String(fileName, StandardCharsets.UTF_8));
-                    out = new BufferedOutputStream(new FileOutputStream("./server-storage/Client1/" + new String(fileName, StandardCharsets.UTF_8)));
+                    out = new BufferedOutputStream(new FileOutputStream(ROOT_PATH + confirmedRootName + new String(fileName, StandardCharsets.UTF_8)));
                     currentState = State.FILE_LENGTH;
                 }
             }
@@ -114,14 +161,66 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void authAnswer(String confirmedName, Channel channel) {
-        byte signalByte = 15;
-        if (confirmedName == null) signalByte = 10;
-        //Если клиент есть в базе и пароль совпал, передаём клиенту название его папки, которая равна его логину
-        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1);
-        buffer.writeByte(signalByte);
-        System.out.println("Записали сигнальный байт " + signalByte + " , 15 - успешная проверка, 10 - введены некорректные данные");
+    public void authAnswer(Channel channel, String fileList) {
+        byte[] fileListBytes = fileList.getBytes(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + fileListBytes.length);
+        buffer.writeByte(SIGNAL_BYTE_AUTH);
+        buffer.writeInt(fileListBytes.length);
+        buffer.writeBytes(fileListBytes);
         channel.writeAndFlush(buffer);
+        System.out.println("Записали и отправили сигнальный байт  " + SIGNAL_BYTE_AUTH + "  - успешная проверка + список файлов");
+    }
+
+    public void authFailedAnswer(Channel channel) {
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1);
+        byte signalByte = SIGNAL_BYTE_AUTH_FAILED;
+        buffer.writeByte(signalByte);
+        channel.writeAndFlush(buffer);
+        System.out.println("Записали и отправили сигнальный байт " + signalByte + " - введены некорректные данные");
+    }
+
+    public void updateFileList(Channel channel, String fileList) {
+        byte[] fileListBytes = fileList.getBytes(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + fileListBytes.length);
+        buffer.writeByte(SIGNAL_BYTE_UPDATE);
+        buffer.writeInt(fileListBytes.length);
+        buffer.writeBytes(fileListBytes);
+        channel.writeAndFlush(buffer);
+        System.out.println("Записали и отправили сигнальный байт  " + SIGNAL_BYTE_UPDATE + "  - успешная проверка + список файлов");
+    }
+
+
+    public String getFileList(String pathToFile) {
+        String filePath;
+        File filesDir = new File(pathToFile);
+        sb.setLength(0);
+        File[] dir = filesDir.listFiles();
+        for (int i = 0; i < dir.length; i++) {
+            if (dir[i].isFile()) {
+                filePath = pathToFile + "//" + dir[i].getName();
+                try {
+                    sb.append(dir[i].getName()).append("SEPARATOR").append(Files.size(Paths.get(filePath))).append("NEXT_FILE");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    public void makeNewDir(String userName) {
+        File f = new File(ROOT_PATH + userName);
+        f.mkdir();
+        String data = "Спасибо, что используете Alex`s cloud storage!";
+        try {
+            FileOutputStream out = new FileOutputStream(ROOT_PATH + userName + "//" + "welcome.txt");
+            out.write(data.getBytes());
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

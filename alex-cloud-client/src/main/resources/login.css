@@ -4,25 +4,35 @@
  -fx-border-radius: 20;
  -fx-padding: 10 10 10 10;
  -fx-background-radius: 20;
+}
 
+#regRoot {
+ -fx-background-color:  linear-gradient(lightgray, gray);
+ -fx-border-color: white;
+ -fx-border-radius: 20;
+ -fx-padding: 10 10 10 10;
+ -fx-background-radius: 20;
 }
 
 #bp {
  -fx-background-color:  linear-gradient(gray,DimGrey );
-
 }
+
+#regBp {
+ -fx-background-color:  linear-gradient(gray,DimGrey );
+}
+
+
 #mp {
   -fx-background-color:  linear-gradient(lightgray, gray);
   -fx-border-color: white;
   -fx-border-radius: 20;
   -fx-padding: 10 10 10 10;
   -fx-background-radius: 20;
-
 }
 
 #hbp {
  -fx-background-color:  linear-gradient(lightgray, gray );
-
 }
 
 #btnLogin {
@@ -31,7 +41,29 @@
     -fx-background-color: linear-gradient(orange, orangered );
 }
 
+#btnRegister {
+    -fx-background-radius: 30, 30, 29, 28;
+    -fx-padding: 3px 10px 3px 10px;
+    -fx-background-color: linear-gradient(orange, orangered );
+}
+
+#btnRegisterNow {
+    -fx-background-radius: 30, 30, 29, 28;
+    -fx-padding: 3px 10px 3px 10px;
+    -fx-background-color: linear-gradient(orange, orangered );
+}
+
+#btnBack {
+    -fx-background-radius: 30, 30, 29, 28;
+    -fx-padding: 3px 10px 3px 10px;
+    -fx-background-color: linear-gradient(orange, orangered );
+}
+
 #text {
+ -fx-fill:  linear-gradient(orange , orangered);
+}
+
+#regText {
  -fx-fill:  linear-gradient(orange , orangered);
 }
 
