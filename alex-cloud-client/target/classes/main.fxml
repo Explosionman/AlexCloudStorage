@@ -1,29 +1,40 @@
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Button?>
-<VBox fx:controller="com.alexcloud.cloud.client.Controller"
-      xmlns:fx="http://javafx.com/fxml" alignment="center">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:id="mp" alignment="center" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/10.0.2-internal"
+      fx:controller="com.alexcloud.cloud.client.controllers.Controller">
+
     <MenuBar>
         <Menu text="Меню">
-            <MenuItem text="Выйти из программы"/>
+            <MenuItem text="Выйти из программы" onAction="#menuItemExitAction"/>
         </Menu>
     </MenuBar>
-    <HBox>
-        <ComboBox/>
-        <TextField HBox.hgrow="ALWAYS" editable="false"/>
-        <Button text="Вверх"/>
-    </HBox>
-    <TableView VBox.vgrow="ALWAYS"/>
-    <HBox spacing="5">
-        <Button text="Отправить на сервер" />
-        <Button text="Скачать" />
-        <Button text="Удалить с сервера" />
+
+    <HBox fx:id="hbp" VBox.vgrow="ALWAYS">
+        <VBox HBox.hgrow="ALWAYS">
+            <fx:include fx:id="clientPanel" source="clientPanel.fxml" VBox.vgrow="ALWAYS"/>
+            <HBox HBox.hgrow="ALWAYS">
+                <Button fx:id="load" maxWidth="Infinity" focusTraversable="false" text="Отправить на сервер" HBox.hgrow="ALWAYS" onAction="#btnLoadAction"/>
+                <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
+            </HBox>
+             </VBox>
+
+        <VBox HBox.hgrow="ALWAYS">
+            <fx:include fx:id="serverPanel" source="serverPanel.fxml" VBox.vgrow="ALWAYS"/>
+            <HBox HBox.hgrow="ALWAYS">
+            <Button fx:id="download" maxWidth="Infinity" focusTraversable="false" text="Скачать файл" HBox.hgrow="ALWAYS" onAction="#btnDownloadAction"/>
+<!--  ДОДЕЛАТЬ ПОСЛЕ РЕВЬЮ  <Button fx:id="delete" maxWidth="Infinity" focusTraversable="false" text="Удалить файл" HBox.hgrow="ALWAYS"/>-->
+
+             <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+             </padding>
+            </HBox>
+        </VBox>
     </HBox>
 
 </VBox>
